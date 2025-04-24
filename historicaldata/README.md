@@ -1,6 +1,6 @@
-# 📊 Indian Stock Market OHLCV Dataset (Top 2000 by Market Cap)
+# 📊 Indian Stock Market OHLCV Dataset (Top 1852 by Market Cap)
 
-This repository contains high-resolution OHLCV datasets for the **Top 2000 Indian stocks by market capitalization (as of 2025)**, covering a 10-year period from **April 1, 2015 to March 31, 2025**.
+This repository contains high-resolution OHLCV datasets for the **Top 1852 Indian stocks by market capitalization (as of 2025)**, covering a 10-year period from **April 1, 2015 to March 31, 2025**.
 
 The dataset is designed for academic research, quantitative finance, machine learning modeling, and algorithmic trading simulations.
 
