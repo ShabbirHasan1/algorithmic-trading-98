@@ -18,6 +18,8 @@ The dataset is designed for academic research, quantitative finance, machine lea
 > - The Top 1852 companies were selected based on market cap in 2025.  
 > - Companies are included from their **IPO/listing date onward**.  
 > - A stock listed in 2018 will have data from its IPO date, not before.
+> - For ease of identification each file is foramtted as XXXX_TICKERSYMBOL.csv
+> - Where XXXX is the rank of the company according to marketcap in Jan 2025.
 
 ---
 
