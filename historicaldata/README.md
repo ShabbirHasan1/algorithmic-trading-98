@@ -58,6 +58,6 @@ Due to large file sizes, the datasets are hosted on Google Drive. Each link corr
 
 ## 📬 Contact
 
-For issues, suggestions, or collaborations, please open an [issue](#https://github.com/bh1rg1v/algorithmic-trading/issues) on this repository.
+For issues, suggestions, or collaborations, please open an [issue](https://github.com/bh1rg1v/algorithmic-trading/issues) on this repository.
 
 ---
