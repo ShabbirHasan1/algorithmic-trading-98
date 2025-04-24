@@ -50,12 +50,13 @@ Each `.csv` file contains OHLCV data for a single stock:
 
 ## 📂 Dataset Access
 
-Due to large file sizes, the datasets are hosted on Google Drive. Each link corresponds to a specific timeframe:
+Due to large file sizes, the datasets are hosted on Jio Cloud:
 
 | Timeframe | Download Link | Size |
 |-----------|----------------|-----|
 | 1-Minute  | 🔗 [Link 1](#) | 52GB |
 
+- Any further change in links will be updated here itself. 
 ---
 
 ## 📬 Contact
