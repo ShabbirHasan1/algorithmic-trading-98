@@ -50,9 +50,9 @@ Each `.csv` file contains OHLCV data for a single stock:
 
 Due to large file sizes, the datasets are hosted on Google Drive. Each link corresponds to a specific timeframe:
 
-| Timeframe | Download Link |
-|-----------|----------------|
-| 1-Minute  | 🔗 [Link 1](#) |
+| Timeframe | Download Link | Size |
+|-----------|----------------|-----|
+| 1-Minute  | 🔗 [Link 1](#) | 52GB |
 
 ---
 
