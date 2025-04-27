@@ -94,25 +94,9 @@ python fetch_iv_data.py
 
 ---
 
-## 🏗️ Future Enhancements
-
-- Add CLI (Command Line Interface) for passing custom arguments.
-- Retry logic for failed API requests.
-- Enhanced logging and error tracking.
-
----
-
 ## 🤝 Contributions
 
 PRs, suggestions, and contributions are welcome!  
 Feel free to fork this repo, improve it, and create a pull request.
 
 ---
-
-## 📄 License
-
-This project is licensed under the [MIT License](LICENSE).
-
----
-
-# 🔥 Happy Data Fetching!
