@@ -57,7 +57,7 @@ data/storage/raw/equity/zerodha/2015-2025/day/
 
 ### Command Line
 ```bash
-python hd-equity.py
+python hd_equity.py
 ```
 
 ### Programmatic
