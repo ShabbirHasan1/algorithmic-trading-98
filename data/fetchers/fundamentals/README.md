@@ -1,4 +1,4 @@
-# Fundamentals Data Fetcher
+# Fundamentals Data Fetcher (screener.in)
 
 A Python script to scrape fundamental financial data from Screener.in for multiple stock symbols.
 
