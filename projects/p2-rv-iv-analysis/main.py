@@ -7,7 +7,7 @@ import time
 import asyncio
 
 # Trading window configuration
-WINDOW_START = '14:59'
+WINDOW_START = '00:00'
 WINDOW_END = '15:31'
 
 def fetch_straddle_data():
