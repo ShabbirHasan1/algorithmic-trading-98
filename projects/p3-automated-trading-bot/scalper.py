@@ -6,11 +6,15 @@ It connects to the Shoonya API for real-time data and order execution.
 """
 
 import os
+import sys
 import logging
 import pandas as pd
 from datetime import datetime
 from time import sleep
 from NorenRestApiPy.NorenApi import FeedType
+
+# Add root directory to Python path
+sys.path.append(os.path.join(os.path.dirname(__file__), '..', '..'))
 
 from broker.shoonya.config import *
 import broker.shoonya.basicfunctions as bf
