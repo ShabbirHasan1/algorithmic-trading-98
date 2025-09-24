@@ -4,6 +4,7 @@ import logging
 import pandas as pd
 import requests
 import zipfile
+import asyncio
 from datetime import datetime
 from time import sleep
 from NorenRestApiPy.NorenApi import FeedType
@@ -13,6 +14,7 @@ sys.path.append(os.path.join(os.path.dirname(__file__), '..', '..'))
 
 from broker.shoonya.config import *
 # import broker.shoonya.basicfunctions as bf
+from telegram_bot import send_to_me
 
 # Login to Shoonya API
 logging.info("Logging into Shoonya API...")
@@ -198,18 +200,17 @@ while datetime.datetime.now().strftime('%H:%M') < '17:51':
                         if ce_cost != 'N/A' and pe_cost != 'N/A':
                             try:
                                 total_cost = float(ce_cost) + float(pe_cost)
-                                print(f"\nOTM Straddle Cost:")
-                                print(f"CE {otm_ce_strike}: {ce_cost}")
-                                print(f"PE {otm_pe_strike}: {pe_cost}")
-                                print(f"Total Cost: {total_cost:.2f}")
+                                message = f"\nLong Straddle Cost:\nCE {otm_ce_strike}: {ce_cost}\nPE {otm_pe_strike}: {pe_cost}\nTotal Cost: {total_cost:.2f}"
+                                print(message)
+                                asyncio.run(send_to_me(message))
                             except ValueError:
-                                print(f"\nOTM Straddle Cost:")
-                                print(f"CE {otm_ce_strike}: {ce_cost}")
-                                print(f"PE {otm_pe_strike}: {pe_cost}")
+                                message = f"\nLong Straddle Cost:\nCE {otm_ce_strike}: {ce_cost}\nPE {otm_pe_strike}: {pe_cost}"
+                                print(message)
+                                asyncio.run(send_to_me(message))
                         else:
-                            print(f"\nOTM Straddle Cost:")
-                            print(f"CE {otm_ce_strike}: {ce_cost}")
-                            print(f"PE {otm_pe_strike}: {pe_cost}")
+                            message = f"\nLong Straddle Cost:\nCE {otm_ce_strike}: {ce_cost}\nPE {otm_pe_strike}: {pe_cost}"
+                            print(message)
+                            asyncio.run(send_to_me(message))
                     else:
                         print(f"  Option chain failed: {option_chain.get('emsg', 'Unknown')}")
                         pass
@@ -225,7 +226,7 @@ while datetime.datetime.now().strftime('%H:%M') < '17:51':
         except Exception as e:
             print(f"{symbol:<25} {exchange:<10} {token:<10} {str(e)[:100]:<10} {'--':<10}")
     
-    # break  # Removed to allow continuous monitoring
+    break  # Removed to allow continuous monitoring
     sleep(5)
 
 # Create a list of tokens of indexes to keep track of...
