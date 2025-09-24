@@ -8,7 +8,7 @@ load_dotenv()
 
 # Command handler for /start
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    await update.message.reply_text("Hello! I am your bot. Send me a message, and I will echo it back!")
+    await update.message.reply_text("Hello! I am online and will send you trading signals.")
 
 # Echo handler for any text message
 async def echo(update: Update, context: ContextTypes.DEFAULT_TYPE):
