@@ -175,4 +175,4 @@ MAX_TRADES_PER_DAY = 10      # Daily trade limit
 
 ---
 
-*Built for speed, designed for profit, engineered for consistency*
+*Precision trading through market microstructure analysis*
