@@ -6,7 +6,7 @@ from datetime import datetime
 # Configuration
 FOLDER_PATH = "data/storage/processed/equity/zerodha/2015/day"
 OUTPUT_FOLDER = "backtestresults/volatility"
-FILE_LIMIT = 2
+FILE_LIMIT = 1
 START_DAY = "Friday"
 END_DAY = "Thursday"
 
@@ -81,13 +81,18 @@ def get_weekly_abs_changes(df, start_day, end_day):
 
     return results
 
-results_text.append(f"Start day\t-\t{START_DAY}")
-results_text.append(f"End day\t\t-\t{END_DAY}")
-
-# Process all CSV files in the folder
-for file in os.listdir(FOLDER_PATH)[:FILE_LIMIT]:
-    if file.endswith(".csv"):
-        file_path = os.path.join(FOLDER_PATH, file)
+def process_volatility_analysis(folder_path=FOLDER_PATH, output_folder=OUTPUT_FOLDER, file_limit=FILE_LIMIT, start_day=START_DAY, end_day=END_DAY, specific_file=None):
+    """Process volatility analysis for files and generate CSV outputs."""
+    os.makedirs(output_folder, exist_ok=True)
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    
+    files_to_process = [specific_file] if specific_file else os.listdir(folder_path)[:file_limit]
+    
+    for file in files_to_process:
+        if not file.endswith(".csv"):
+            continue
+            
+        file_path = os.path.join(folder_path, file)
         print(f"Processing file: {file}")
         results_text.append(f"\nAnalysis for: {file[:-4]}\n")
 
@@ -106,10 +111,10 @@ for file in os.listdir(FOLDER_PATH)[:FILE_LIMIT]:
         df = df.dropna(subset=["Close", "High", "Low"])
         df.sort_values("Date", ascending=True, inplace=True)
 
-        weekly_changes = get_weekly_abs_changes(df, START_DAY, END_DAY)
+        weekly_changes = get_weekly_abs_changes(df, start_day, end_day)
 
         if not weekly_changes:
-            print(f"No {START_DAY}-to-{END_DAY} data found in {file}")
+            print(f"No {start_day}-to-{end_day} data found in {file}")
             continue
 
         avg_abs_change_pct = np.mean([change for _, change, _ in weekly_changes])
@@ -124,36 +129,59 @@ for file in os.listdir(FOLDER_PATH)[:FILE_LIMIT]:
         ])
 
         max_peak_values = sorted([max_peak for _, _, max_peak in weekly_changes], reverse=True)
+        abs_change_values = sorted([change for _, change, _ in weekly_changes], reverse=True)
         num_entries = len(max_peak_values)
-        percentile_size = max(1, num_entries // 20)
-
-        percentile_averages = {}
-        for i in range(20):
-            start_idx = i * percentile_size
-            end_idx = min((i + 1) * percentile_size, num_entries)
-            percentile_avg = np.mean(max_peak_values[start_idx:end_idx])
-            percentile_averages[f"{i * 5}-{(i + 1) * 5}%"] = round(percentile_avg, 2)
-
-        # Percentile analysis for absolute changes
-        abs_change_values = [change for _, change, _ in weekly_changes]
-        abs_change_values.sort(reverse=True)
         
+        # Calculate individual percentiles (1-100)
+        percentile_averages = {}
         abs_percentile_averages = {}
-        for i in range(20):
-            start_idx = i * percentile_size
-            end_idx = min((i + 1) * percentile_size, num_entries)
-            percentile_avg = np.mean(abs_change_values[start_idx:end_idx])
-            abs_percentile_averages[f"{i * 5}-{(i + 1) * 5}%"] = round(percentile_avg, 2)
+        
+        for p in range(1, 101):
+            idx = int((p - 1) * num_entries / 100)
+            if idx >= num_entries:
+                idx = num_entries - 1
+            
+            percentile_averages[f"{p * 5 - 4}-{p * 5}%"] = max_peak_values[idx] if p <= 20 else 0
+            abs_percentile_averages[f"{p * 5 - 4}-{p * 5}%"] = abs_change_values[idx] if p <= 20 else 0
+        
+        # Store individual percentile data for CSV
+        individual_percentiles = {}
+        individual_abs_percentiles = {}
+        for p in range(1, 101):
+            idx = int((p - 1) * num_entries / 100)
+            if idx >= num_entries:
+                idx = num_entries - 1
+            individual_percentiles[p] = max_peak_values[idx]
+            individual_abs_percentiles[p] = abs_change_values[idx]
 
-        results_text.append("\nPercentile Analysis:\n")
+        results_text.append("\nPercentile Analysis (Top 20 ranges):\n")
         results_text.append(f"{'Percentile':<12} {'Abs Change':<12} {'Max Peak Change':<15}")
         results_text.append("-" * 40)
 
-        for percentile in abs_percentile_averages.keys():
-            abs_avg = abs_percentile_averages[percentile]
-            peak_avg = percentile_averages[percentile]
-            line = f"{percentile:<12} {abs_avg:.2f}%{'':<8} {peak_avg:.2f}%"
+        # Display 20 percentile ranges for text output
+        for i in range(20):
+            percentile_range = f"{i * 5}-{(i + 1) * 5}%"
+            abs_avg = np.mean([individual_abs_percentiles[p] for p in range(i*5+1, min((i+1)*5+1, 101))])
+            peak_avg = np.mean([individual_percentiles[p] for p in range(i*5+1, min((i+1)*5+1, 101))])
+            line = f"{percentile_range:<12} {abs_avg:.2f}%{'':<8} {peak_avg:.2f}%"
             results_text.append(line)
+        
+        # Create CSV data for individual percentiles (1-100)
+        percentile_data = []
+        stock_name = file[:-4].replace('0000_', '')  # Remove .csv and 0000_ prefix
+        for p in range(1, 101):
+            percentile_data.append({
+                'Stock': stock_name,
+                'Percentile': p,
+                'Abs Change Percentage': round(individual_abs_percentiles[p], 2),
+                'Peak Abs Change Percentage': round(individual_percentiles[p], 2)
+            })
+        
+        # Save percentile data to CSV
+        csv_filename = os.path.join(output_folder, f"{stock_name}.csv")
+        percentile_df = pd.DataFrame(percentile_data)
+        percentile_df.to_csv(csv_filename, index=False)
+        print(f"Percentile analysis saved to: {csv_filename}")
 
         yearly_changes = {}
         yearly_peak_changes = {}
@@ -171,7 +199,7 @@ for file in os.listdir(FOLDER_PATH)[:FILE_LIMIT]:
         avg_yearly_changes = {year: round(np.mean(changes), 2) for year, changes in yearly_changes.items()}
         avg_yearly_peak_changes = {year: round(np.mean(peaks), 2) for year, peaks in yearly_peak_changes.items()}
 
-        results_text.append(f"\nAverage {START_DAY}-to-{END_DAY} Changes Per Year:\n")
+        results_text.append(f"\nAverage {start_day}-to-{end_day} Changes Per Year:\n")
         results_text.append(f"{'Year':<6} {'Abs Change':<12} {'Max Peak Change':<15}")
         results_text.append("-" * 35)
         
@@ -210,7 +238,13 @@ for file in os.listdir(FOLDER_PATH)[:FILE_LIMIT]:
             results_text.append("\nMonthly Max Peak Change Percentages Table:\n")
             results_text.append(str(peak_table.round(2)))
 
-# Save results to file
-with open(output_file, 'w') as f:
-    f.write('\n'.join(results_text))
-print(f"\nResults saved to: {output_file}")
+if __name__ == '__main__':
+    results_text.append(f"Start day\t-\t{START_DAY}")
+    results_text.append(f"End day\t\t-\t{END_DAY}")
+    
+    process_volatility_analysis()
+    
+    # Save results to file
+    with open(output_file, 'w') as f:
+        f.write('\n'.join(results_text))
+    print(f"\nText results saved to: {output_file}")

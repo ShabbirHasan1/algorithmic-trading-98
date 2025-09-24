@@ -118,116 +118,119 @@ symbol_mapping = {
 print("\nSymbol mapping:")
 print(symbol_mapping)
 
-# Fetch and display LTP for index symbols every 5 seconds
-while datetime.datetime.now().strftime('%H:%M') < '17:51':
-    print(f"\n{'Symbol':<25} {'Exchange':<10} {'Token':<10} {'LTP':<10} {'Time':<10}")
-    print("-" * 60)
-    
-    for symbol, (exchange, token) in index_dict.items():
-        if symbol != 'Nifty 50':
-            continue
-        try:
-            ret = api.get_quotes(exchange=exchange, token=str(token))
-            if ret and ret.get('stat') == 'Ok':
-                ltp = ret.get('lp', '0.00')
-                time_str = datetime.datetime.now().strftime('%H:%M:%S')
-                print(f"{symbol:<25} {exchange:<10} {token:<10} {ltp:<10} {time_str:<10}")
-                
-                # Fetch option chain using current price as strike price
-                try:
-                    start_time = datetime.datetime.now()
-                    # Get the NFO symbol for option chain
-                    nfo_symbol = symbol_mapping.get(symbol, symbol)
-                    print(f"    NFO Symbol: {nfo_symbol}")
-                    print(f"    Symbol: {symbol}, ltp: {ltp}")
-                    # Get trading symbol from nearest expiry data
-                    trading_symbol_row = nearest_expiry_df[nearest_expiry_df['Symbol'] == nfo_symbol]
-                    if not trading_symbol_row.empty:
-                        trading_symbol = trading_symbol_row['TradingSymbol'].iloc[0]
-                    else:
-                        trading_symbol = nfo_symbol
-                    rounded_strike = round(float(ltp) / 50) * 50
-                    option_chain = api.get_option_chain(exchange='NFO', tradingsymbol=trading_symbol, strikeprice=rounded_strike, count=6)
-                    if option_chain and option_chain.get('stat') == 'Ok':
-                        print(f"\nOption chain for {symbol}:")
-                        print(f"{'CALL':<15} {'Strike':<20} {'PUT':<15}")
-                        print("-" * 40)
-                        
-                        # Group options by strike price
-                        strikes = {}
-                        for option in option_chain.get('values', []):
-                            strike = option.get('strprc', '')
-                            if strike not in strikes:
-                                strikes[strike] = {'CE': '', 'PE': ''}
-                            
-                            try:
-                                option_token = option.get('token', '')
-                                option_exchange = option.get('exch', 'NFO')
-                                option_price_ret = api.get_quotes(exchange=option_exchange, token=option_token)
-                                option_price = option_price_ret.get('lp', '0.00') if option_price_ret and option_price_ret.get('stat') == 'Ok' else '0.00'
-                                strikes[strike][option.get('optt', '')] = option_price
-                            except Exception as e:
-                                strikes[strike][option.get('optt', '')] = 'N/A'
-                        
-                        row_number = 0
-                        # Display in screener format
-                        for strike in sorted(strikes.keys(), key=lambda x: float(x) if x else 0):
-                            row_number += 1
-                            ce_price = strikes[strike].get('CE', '')
-                            pe_price = strikes[strike].get('PE', '')
-                            print(f"{row_number} {ce_price:<15} {strike:<20} {pe_price:<15}")
+def calculate_long_straddle_price(symbol='Nifty 50'):
+    """Calculate long straddle price for given symbol."""
+    if symbol not in index_dict:
+        print(f"Symbol {symbol} not found in index dictionary")
+        return None
+        
+    exchange, token = index_dict[symbol]
 
-                        
-                        # Calculate 0.5% above and below LTP for OTM options
-                        ltp_float = float(ltp)
-                        otm_ce_target = ltp_float * 1.005  # 0.5% above
-                        otm_pe_target = ltp_float * 0.995  # 0.5% below
-                        
-                        # Find nearest strikes
-                        otm_ce_strike = round(otm_ce_target / 50) * 50
-                        otm_pe_strike = round(otm_pe_target / 50) * 50
-                        
-                        print(f"\nOTM Analysis (0.5% from LTP {ltp}):")
-                        print(f"CE Target: {otm_ce_target:.2f} -> Strike: {otm_ce_strike}")
-                        print(f"PE Target: {otm_pe_target:.2f} -> Strike: {otm_pe_strike}")
-                        print(f"Available strikes: {list(strikes.keys())}")
-                        print(f"Looking for CE: '{str(otm_ce_strike)}', PE: '{str(otm_pe_strike)}'")
-                        
-                        # Find costs from the strikes dictionary
-                        ce_cost = strikes.get(f"{otm_ce_strike:.2f}", {}).get('CE', 'N/A')
-                        pe_cost = strikes.get(f"{otm_pe_strike:.2f}", {}).get('PE', 'N/A')
-                        
-                        if ce_cost != 'N/A' and pe_cost != 'N/A':
-                            try:
-                                total_cost = float(ce_cost) + float(pe_cost)
-                                message = f"\nLong Straddle Cost:\nCE {otm_ce_strike}: {ce_cost}\nPE {otm_pe_strike}: {pe_cost}\nTotal Cost: {total_cost:.2f}"
-                                print(message)
-                                asyncio.run(send_to_me(message))
-                            except ValueError:
-                                message = f"\nLong Straddle Cost:\nCE {otm_ce_strike}: {ce_cost}\nPE {otm_pe_strike}: {pe_cost}"
-                                print(message)
-                                asyncio.run(send_to_me(message))
-                        else:
-                            message = f"\nLong Straddle Cost:\nCE {otm_ce_strike}: {ce_cost}\nPE {otm_pe_strike}: {pe_cost}"
-                            print(message)
-                            asyncio.run(send_to_me(message))
-                    else:
-                        print(f"  Option chain failed: {option_chain.get('emsg', 'Unknown')}")
-                        pass
-                    
-                    end_time = datetime.datetime.now()
-                    time_taken = (end_time - start_time).total_seconds()
-                    print(f"    Time taken: {time_taken:.2f} seconds\n")
-                except Exception as e:
-                    print(f"  Option chain failed for {symbol}: {str(e)[:50]}")
-            else:
-                error_msg = ret.get('emsg', 'Unknown') if ret else 'No response'
-                print(f"{symbol:<25} {exchange:<10} {token:<10} {error_msg[:100]:<10} {'--':<10}")
-        except Exception as e:
-            print(f"{symbol:<25} {exchange:<10} {token:<10} {str(e)[:100]:<10} {'--':<10}")
+    from datetime import datetime
     
-    break  # Removed to allow continuous monitoring
-    sleep(5)
+    try:
+        ret = api.get_quotes(exchange=exchange, token=str(token))
+        if ret and ret.get('stat') == 'Ok':
+            ltp = ret.get('lp', '0.00')
+            time_str = datetime.now().strftime('%H:%M:%S')
+            print(f"{symbol:<25} {exchange:<10} {token:<10} {ltp:<10} {time_str:<10}")
+            
+            # Fetch option chain using current price as strike price
+            start_time = datetime.now()
+            nfo_symbol = symbol_mapping.get(symbol, symbol)
+            
+            # Get trading symbol from nearest expiry data
+            trading_symbol_row = nearest_expiry_df[nearest_expiry_df['Symbol'] == nfo_symbol]
+            if not trading_symbol_row.empty:
+                trading_symbol = trading_symbol_row['TradingSymbol'].iloc[0]
+                expiry_date = trading_symbol_row['Expiry'].iloc[0]
+                expiry_day = expiry_date.strftime('%A')
+            else:
+                trading_symbol = nfo_symbol
+                expiry_date = None
+                expiry_day = None
+                
+            rounded_strike = round(float(ltp) / 50) * 50
+            option_chain = api.get_option_chain(exchange='NFO', tradingsymbol=trading_symbol, strikeprice=rounded_strike, count=6)
+            
+            if option_chain and option_chain.get('stat') == 'Ok':
+                # Group options by strike price
+                strikes = {}
+                for option in option_chain.get('values', []):
+                    strike = option.get('strprc', '')
+                    if strike not in strikes:
+                        strikes[strike] = {'CE': '', 'PE': ''}
+                    
+                    try:
+                        option_token = option.get('token', '')
+                        option_exchange = option.get('exch', 'NFO')
+                        option_price_ret = api.get_quotes(exchange=option_exchange, token=option_token)
+                        option_price = option_price_ret.get('lp', '0.00') if option_price_ret and option_price_ret.get('stat') == 'Ok' else '0.00'
+                        strikes[strike][option.get('optt', '')] = option_price
+                    except Exception as e:
+                        strikes[strike][option.get('optt', '')] = 'N/A'
+                
+                # Calculate 0.5% above and below LTP for OTM options
+                ltp_float = float(ltp)
+                otm_ce_target = ltp_float * 1.005  # 0.5% above
+                otm_pe_target = ltp_float * 0.995  # 0.5% below
+                
+                # Find nearest strikes
+                otm_ce_strike = round(otm_ce_target / 50) * 50
+                otm_pe_strike = round(otm_pe_target / 50) * 50
+                
+                # Find costs from the strikes dictionary
+                ce_cost = strikes.get(f"{otm_ce_strike:.2f}", {}).get('CE', 'N/A')
+                pe_cost = strikes.get(f"{otm_pe_strike:.2f}", {}).get('PE', 'N/A')
+                
+                result = {
+                    'symbol': symbol,
+                    'ltp': float(ltp),
+                    'ce_strike': otm_ce_strike,
+                    'pe_strike': otm_pe_strike,
+                    'ce_cost': ce_cost,
+                    'pe_cost': pe_cost,
+                    'total_cost': None,
+                    'expiry_date': expiry_date.strftime('%Y-%m-%d') if expiry_date else None,
+                    'expiry_day': expiry_day
+                }
+                
+                if ce_cost != 'N/A' and pe_cost != 'N/A':
+                    try:
+                        total_cost = float(ce_cost) + float(pe_cost)
+                        result['total_cost'] = total_cost
+                        message = f"\nLong Straddle Cost:\nCE {otm_ce_strike}: {ce_cost}\nPE {otm_pe_strike}: {pe_cost}\nTotal Cost: {total_cost:.2f}"
+                        print(message)
+                        # asyncio.run(send_to_me(message))
+                    except ValueError:
+                        message = f"\nLong Straddle Cost:\nCE {otm_ce_strike}: {ce_cost}\nPE {otm_pe_strike}: {pe_cost}"
+                        print(message)
+                        # asyncio.run(send_to_me(message))
+                else:
+                    message = f"\nLong Straddle Cost:\nCE {otm_ce_strike}: {ce_cost}\nPE {otm_pe_strike}: {pe_cost}"
+                    print(message)
+                    # asyncio.run(send_to_me(message))
+                
+                return result
+            else:
+                print(f"Option chain failed: {option_chain.get('emsg', 'Unknown')}")
+                return None
+        else:
+            error_msg = ret.get('emsg', 'Unknown') if ret else 'No response'
+            print(f"Failed to get quotes: {error_msg}")
+            return None
+    except Exception as e:
+        print(f"Error calculating straddle price for {symbol}: {str(e)}")
+        return None
+
+
+if __name__ == '__main__':
+    # Fetch and display LTP for index symbols every 5 seconds
+    while datetime.now().strftime('%H:%M') < '15:51':
+        result = calculate_long_straddle_price('Nifty 50')
+        if result:
+            print(f"Straddle calculation completed for {result['symbol']}")
+        sleep(5)
 
 # Create a list of tokens of indexes to keep track of...
 
