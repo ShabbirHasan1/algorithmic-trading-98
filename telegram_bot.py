@@ -13,7 +13,30 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
 # Echo handler for any text message
 async def echo(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_message = update.message.text
-    # print(f"Chat ID: {update.message.chat_id}")
+    chat_id = str(update.message.chat_id)
+    
+    # Add new chat ID to env file if not already present
+    current_chat_ids = os.getenv('CHAT_IDS', '').split(',')
+    if chat_id not in current_chat_ids:
+        current_chat_ids.append(chat_id)
+        new_chat_ids = ','.join([id.strip() for id in current_chat_ids if id.strip()])
+        
+        # Update .env file
+        with open('.env', 'r') as f:
+            lines = f.readlines()
+        
+        with open('.env', 'w') as f:
+            for line in lines:
+                if line.startswith('CHAT_IDS='):
+                    f.write(f'CHAT_IDS={new_chat_ids}\n')
+                else:
+                    f.write(line)
+        
+        # Send new user details to existing users
+        user = update.message.from_user
+        user_details = f"New user added:\nID: {user.id}\nFirst Name: {user.first_name or 'N/A'}\nLast Name: {user.last_name or 'N/A'}\nUsername: @{user.username or 'N/A'}\nChat ID: {chat_id}"
+        await send_to_me(user_details)
+    
     await update.message.reply_text("This is a private trading bot developed by Bhargav Ram Manukonda for personal use. It is designed exclusively to send trading signals and is not available for public use.")
 
 # Function to send message to specific chat

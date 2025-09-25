@@ -94,7 +94,7 @@ def scheduler():
             min_percentile, message1, message2 = analyze_straddle(nifty_df)
             
             # Send message if min_percentile >= 95 or every 5 minutes
-            if min_percentile >= 95 or (time.time() - last_message_time) >= 300:
+            if min_percentile >= 95 or (time.time() - last_message_time) >= 3600:
                 asyncio.run(send_to_me(message1))
                 asyncio.run(send_to_me(message2))
                 last_message_time = time.time()
