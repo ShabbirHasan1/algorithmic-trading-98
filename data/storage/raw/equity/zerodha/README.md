@@ -54,9 +54,9 @@ Due to large file sizes, the datasets are hosted on Jio Cloud:
 
 | Timeframe | Download Link | Size |
 |-----------|----------------|-----|
-| 1-Minute  | 🔗 [Link](https://www.jioaicloud.com/l/?u=uWHF3kOxhX4zIfGPk_AuAR-UWdOk8wLpmCbO6exytFhwcaYhZOKouJF3f9XSOytqNL3) | 52GB |
+| 1-Minute  | 🔗 [Link](https://www.jioaicloud.com/l/?u=2UKMK57g5ujjKzMZ_hOpABOS6sCm6cHWUcnEK6iww7XSQIoGAFVFM3BZSOVhlgI8hIb) | 52GB |
 | 5-Minute | 🔗 [Link](https://www.jioaicloud.com/l/?u=gXhSnTUGz7uSuyRuFj1qP3z73FT_KPAZoayYKWMq8260qH66XYtx093oktuDxNZLMHW) | 12GB |
-| Daily | 🔗 [Link](https://www.jiocloud.com/l/?u=tEpIBhEGvE-C_shg_hNkbESxzAHLB5JwvB1foP8iKYL_P0-RHHeAtlNK2rRYbgI3NL3) | 0.2GB |
+| Daily | 🔗 [Link](https://www.jioaicloud.com/l/?u=uWHF3kOxhX4zIfGPk_AuAR-UWdOk8wLpmCbO6exytFhwcaYhZOKouJF3f9XSOytqNL3) | 0.2GB |
 
 - Any further change in links will be updated here itself. 
 ---
